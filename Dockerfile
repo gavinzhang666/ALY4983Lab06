@@ -10,7 +10,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy source code and model artifact
 COPY src/ src/
-COPY artifacts/model.pkl artifacts/model.pkl
+COPY model.pkl ./artifacts/model.pkl
 
 # Define default command to evaluate the model
 CMD ["python", "src/evaluate.py"]
