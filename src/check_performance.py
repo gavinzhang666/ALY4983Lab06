@@ -1,5 +1,6 @@
 import sys
 
+accuracy = 0.50
 threshold = 0.999
 with open("artifacts/accuracy.txt", "r") as f:
     accuracy = float(f.read().strip())
