@@ -1,6 +1,6 @@
 import sys
 
-threshold = 0.95  #Intentionally setting a higher accuracy rate than the model's actual accuracy rate
+threshold = 0.95
 with open("artifacts/accuracy.txt", "r") as f:
     accuracy = float(f.read().strip())
 
