@@ -1,4 +1,4 @@
-name: ML CI Pipeline
+name: ML CI/CD Pipeline
 
 on:
   push:
@@ -18,7 +18,7 @@ jobs:
         with:
           python-version: '3.10'
 
-      # Cache pip dependencies
+      # Cache dependencies
       - name: Cache pip dependencies
         uses: actions/cache@v3
         with:
@@ -32,7 +32,6 @@ jobs:
 
       - name: Run flake8
         run: flake8 src/ tests/
-        continue-on-error: false
 
   test:
     name: Run Unit Tests
@@ -46,7 +45,6 @@ jobs:
         with:
           python-version: '3.10'
 
-      # Cache pip dependencies
       - name: Cache pip dependencies
         uses: actions/cache@v3
         with:
@@ -73,7 +71,6 @@ jobs:
         with:
           python-version: '3.10'
 
-      # Cache pip dependencies
       - name: Cache pip dependencies
         uses: actions/cache@v3
         with:
@@ -98,25 +95,36 @@ jobs:
           path: artifacts/model.pkl
 
   deploy:
-    name: Deploy Model
+    name: Build and Push Docker Image
     runs-on: ubuntu-latest
-    needs: train  # Only run if train job succeeds
+    needs: train
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.10'
 
       - name: Download model artifact
         uses: actions/download-artifact@v4
         with:
           name: trained-model
 
-      - name: Simulate deployment
-        run: |
-          echo "Deploying model artifact..."
-          ls -lh model.pkl
-          # Example: you can add scp/docker/kubectl commands here
+      # Setup Docker Buildx (for cross-platform builds if needed)
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Log in to Docker Hub
+      - name: Docker Login
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      # Build Docker image with model
+      - name: Build Docker image
+        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/ml-app:${{ github.sha }} .
+
+      # Push Docker image to Docker Hub
+      - name: Push Docker image
+        run: docker push ${{ secrets.DOCKER_USERNAME }}/ml-app:${{ github.sha }}
+
+      - name: Finish
+        run: echo "✅ Docker image pushed successfully!"
