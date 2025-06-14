@@ -120,11 +120,11 @@ jobs:
 
       # Build Docker image with model
       - name: Build Docker image
-        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/ml-app:${{ github.sha }} .
+        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/aly4983lab06:${{ github.sha }} .
 
       # Push Docker image to Docker Hub
       - name: Push Docker image
-        run: docker push ${{ secrets.DOCKER_USERNAME }}/ml-app:${{ github.sha }}
+        run: docker push ${{ secrets.DOCKER_USERNAME }}/aly4983lab06:${{ github.sha }}
 
       - name: Finish
-        run: echo "✅ Docker image pushed successfully!"
+        run: echo "Docker image pushed successfully!"
