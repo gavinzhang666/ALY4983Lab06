@@ -21,6 +21,8 @@ def main():
     y_pred = model.predict(X_test)
     accuracy = accuracy_score(y_test, y_pred)
 
+    raise ValueError("Intentional test failure")
+
     # Save model and accuracy
     os.makedirs("artifacts", exist_ok=True)
     joblib.dump(model, "artifacts/model.pkl")
