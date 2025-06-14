@@ -2,36 +2,97 @@ name: ML CI Pipeline
 
 on:
   push:
-    branches: ["main"]
+    branches: [ "main" ]
   pull_request:
-    branches: ["main"]
+    branches: [ "main" ]
 
 jobs:
-  build-and-test:
+  lint:
+    name: Lint with flake8
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v2
 
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
-          python-version: "3.9"
+          python-version: '3.10'
+
+      # Cache pip dependencies to speed up installs
+      - name: Cache pip dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
 
       - name: Install dependencies
-        run: |
-          pip install -r requirements.txt
+        run: pip install -r requirements.txt
 
-      - name: Lint (Optional)
+      - name: Run flake8
         run: flake8 src/ tests/
 
-      - name: Run Unit Tests
+  test:
+    name: Run Unit Tests
+    runs-on: ubuntu-latest
+    needs: lint  # This job runs after lint completes successfully
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      # Reuse cached pip packages
+      - name: Cache pip dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run pytest
         run: pytest tests/
+
+  train:
+    name: Train and Evaluate Model
+    runs-on: ubuntu-latest
+    needs: test  # This job runs after tests pass
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      # Reuse cached pip packages
+      - name: Cache pip dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
 
       - name: Train model
         run: python src/train.py
 
-      - name: Evaluate model
-        run: |
-          python src/evaluate.py
-          python src/check_performance.py
+      - name: Evaluate model performance
+        run: python src/check_performance.py
+
+      # Upload trained model as an artifact
+      - name: Upload model artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: trained-model
+          path: artifacts/model.pkl
